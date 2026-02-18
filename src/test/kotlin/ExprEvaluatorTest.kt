@@ -103,6 +103,22 @@ class ExprEvaluatorTest : FunSpec({
             evaluator.evaluate(e) shouldBe 101
         }
     }
+    context("条件分岐") {
+        test("if (1 > 2) 2 else 1 == 1") {
+            val e = If(tGt(tInt(1), tInt(2)), tInt(2), tInt(1))
+            evaluator.evaluate(e) shouldBe 1
+        }
+    }
+    context("While ループ") {
+        test("i = 0; while (i < 10) { i = i + 1; } == 10") {
+            val e = Seq(
+                Assignment("i", tInt(0)),
+                While(tLt(Ident("i"), tInt(10)), Seq(Assignment("i", tAdd(Ident("i"), tInt(1))))),
+                Ident("i")
+            )
+            evaluator.evaluate(e) shouldBe 10
+        }
+    }
 })
 
 fun tAdd(a: Expr, b: Expr) = BinExpr(

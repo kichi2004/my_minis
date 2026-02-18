@@ -22,3 +22,7 @@ class Assignment(val name: String, val expression: Expr) : Expr("Assignment")
 class Ident(val name: String) : Expr("Ident")
 
 class Seq(vararg val bodies: Expr) : Expr("Seq")
+
+class If(val condition: Expr, val thenBranch: Expr, val elseBranch: Expr) : Expr("If")
+
+class While(val condition: Expr, val body: Expr) : Expr("While")

@@ -1,11 +1,11 @@
 import BinExpr.Op.*
 
-typealias Env = MutableMap<String, Long>
+typealias Env = MutableMap<String, Long?>
 
 class ExprEvaluator {
     private fun evaluateMath(expr: BinExpr, env: Env): Long {
-        val lhs = internalEvaluate(expr.lhs, env)
-        val rhs = internalEvaluate(expr.rhs, env)
+        val lhs = internalEvaluate(expr.lhs, env)?: throw IllegalStateException("Math evaluation resulted in null")
+        val rhs = internalEvaluate(expr.rhs, env) ?: throw IllegalStateException("Math evaluation resulted in null")
 
         return when (expr.op) {
             PLUS -> lhs + rhs
@@ -17,8 +17,8 @@ class ExprEvaluator {
     }
 
     private fun evaluateComp(expr: BinExpr, env: Env): Long {
-        val lhs = internalEvaluate(expr.lhs, env)
-        val rhs = internalEvaluate(expr.rhs, env)
+        val lhs = internalEvaluate(expr.lhs, env) ?: throw IllegalStateException("Comp evaluation resulted in null")
+        val rhs = internalEvaluate(expr.rhs, env) ?: throw IllegalStateException("Comp evaluation resulted in null")
 
         return when (expr.op) {
             EQUAL -> if (lhs == rhs) 1 else 0
@@ -33,7 +33,7 @@ class ExprEvaluator {
 
     fun evaluate(expr: Expr) = internalEvaluate(expr, mutableMapOf())
 
-    fun internalEvaluate(expr: Expr, env: Env): Long =
+    fun internalEvaluate(expr: Expr, env: Env): Long? =
         when (expr) {
             is MyInt -> expr.value
             is BinExpr -> {
@@ -45,7 +45,7 @@ class ExprEvaluator {
             is Seq -> {
                 var result: Long? = null
                 expr.bodies.forEach { result = internalEvaluate(it, env) }
-                return result ?: throw IllegalStateException("Sequence evaluation resulted in null")
+                return result
             }
             is Assignment -> {
                 val value = internalEvaluate(expr.expression, env)
@@ -53,6 +53,18 @@ class ExprEvaluator {
                 return value
             }
             is Ident -> env[expr.name] ?: throw IllegalArgumentException("Unbound variable: ${expr.name}")
+            is If -> {
+                internalEvaluate(
+                    if (internalEvaluate(expr.condition, env) != 0L) expr.thenBranch else expr.elseBranch,
+                    env
+                )
+            }
+            is While -> {
+                while (internalEvaluate(expr.condition, env) != 0L) {
+                    internalEvaluate(expr.body, env)
+                }
+                return null
+            }
             else -> throw IllegalArgumentException("Unknown expression type: $expr")
         }
 }
