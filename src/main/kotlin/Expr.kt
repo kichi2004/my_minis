@@ -1,4 +1,6 @@
-open class Expr(val type: String)
+abstract class Expr : Ast {
+    constructor(type: String) : super(type)
+}
 
 class BinExpr(val op: Op, val lhs: Expr, val rhs: Expr) : Expr("BinExpr") {
     enum class Op {
@@ -26,3 +28,5 @@ class Seq(vararg val bodies: Expr) : Expr("Seq")
 class If(val condition: Expr, val thenBranch: Expr, val elseBranch: Expr) : Expr("If")
 
 class While(val condition: Expr, val body: Expr) : Expr("While")
+
+class Call(val func: String, vararg val args: Expr) : Expr("Call")

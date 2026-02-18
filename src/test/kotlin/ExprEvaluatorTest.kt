@@ -119,6 +119,17 @@ class ExprEvaluatorTest : FunSpec({
             evaluator.evaluate(e) shouldBe 10
         }
     }
+    context("関数呼び出し") {
+        test("function add(a, b) { return a + b; }, add(1, 2) == 3") {
+            val program = Program(
+                listOf(
+                    Func("add", listOf("a", "b"), tAdd(Ident("a"), Ident("b"))),
+                ),
+                Call("add", tInt(1), tInt(2))
+            )
+            evaluator.evaluateProgram(program) shouldBe 3
+        }
+    }
 })
 
 fun tAdd(a: Expr, b: Expr) = BinExpr(

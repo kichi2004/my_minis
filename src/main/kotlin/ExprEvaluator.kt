@@ -1,6 +1,11 @@
 import BinExpr.Op.*
+import kotlin.collections.forEachIndexed
 
-typealias Env = MutableMap<String, Long?>
+sealed class EnvValue
+data class Function(val func: Func) : EnvValue()
+data class Value(val value: Long?) : EnvValue()
+
+typealias Env = MutableMap<String, EnvValue>
 
 class ExprEvaluator {
     private fun evaluateMath(expr: BinExpr, env: Env): Long {
@@ -31,6 +36,12 @@ class ExprEvaluator {
         }
     }
 
+    fun evaluateProgram(program: Program): Long? {
+        val env = mutableMapOf<String, EnvValue>()
+        program.functions.forEach { env[it.name] = Function(it) }
+        return internalEvaluate(program.bodies, env)
+    }
+
     fun evaluate(expr: Expr) = internalEvaluate(expr, mutableMapOf())
 
     fun internalEvaluate(expr: Expr, env: Env): Long? =
@@ -49,10 +60,13 @@ class ExprEvaluator {
             }
             is Assignment -> {
                 val value = internalEvaluate(expr.expression, env)
-                env[expr.name] = value
+                env[expr.name] = Value(value)
                 return value
             }
-            is Ident -> env[expr.name] ?: throw IllegalArgumentException("Unbound variable: ${expr.name}")
+            is Ident -> {
+                if (!env.containsKey(expr.name)) throw IllegalArgumentException()
+                return (env[expr.name] as Value).value ?: throw IllegalArgumentException("Unbound variable: ${expr.name}")
+            }
             is If -> {
                 internalEvaluate(
                     if (internalEvaluate(expr.condition, env) != 0L) expr.thenBranch else expr.elseBranch,
@@ -64,6 +78,13 @@ class ExprEvaluator {
                     internalEvaluate(expr.body, env)
                 }
                 return null
+            }
+            is Call -> {
+                val e = env[expr.func] ?: throw IllegalArgumentException("Unbound function: ${expr.func}")
+                if (e !is Function) throw IllegalArgumentException("Not a function: ${expr.func}")
+                val newEnv = env.toMutableMap()
+                expr.args.forEachIndexed { i, expr -> newEnv[e.func.paramNames[i]] = Value(internalEvaluate(expr, env)) }
+                return internalEvaluate(e.func.body, newEnv)
             }
             else -> throw IllegalArgumentException("Unknown expression type: $expr")
         }
