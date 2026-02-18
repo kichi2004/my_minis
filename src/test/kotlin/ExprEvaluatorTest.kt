@@ -88,17 +88,17 @@ class ExprEvaluatorTest : FunSpec({
             evaluator.evaluate(e) shouldBe 1
         }
         test("{ a = 100; a} == 100") {
-            val e = tSeq(
-                tAssign("a", tInt(100)),
-                tIdent("a")
+            val e = Seq(
+                Assignment("a", tInt(100)),
+                Ident("a")
             )
             evaluator.evaluate(e) shouldBe 100
         }
         test("{a = 100; b = a + 1; b} == 101") {
-            val e = tSeq(
-                tAssign("a", tInt(100)),
-                tAssign("b", tAdd(tIdent("a"), tInt(1))),
-                tIdent("b")
+            val e = Seq(
+                Assignment("a", tInt(100)),
+                Assignment("b", tAdd(Ident("a"), tInt(1))),
+                Ident("b")
             )
             evaluator.evaluate(e) shouldBe 101
         }
@@ -166,7 +166,3 @@ fun tNe(a: Expr, b: Expr) = BinExpr(
     lhs = a,
     rhs = b
 )
-
-fun tAssign(name: String, expression: Expr) = Assignment(name, expression)
-fun tIdent(name: String) = Ident(name)
-fun tSeq(vararg bodies: Expr) = Seq(*bodies)
