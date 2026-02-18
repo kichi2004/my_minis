@@ -9,21 +9,21 @@ typealias Env = MutableMap<String, EnvValue>
 
 class ExprEvaluator {
     private fun evaluateMath(expr: BinExpr, env: Env): Long {
-        val lhs = internalEvaluate(expr.lhs, env)?: throw IllegalStateException("Math evaluation resulted in null")
-        val rhs = internalEvaluate(expr.rhs, env) ?: throw IllegalStateException("Math evaluation resulted in null")
+        val lhs = evaluate(expr.lhs, env) ?: error("Math evaluation resulted in null")
+        val rhs = evaluate(expr.rhs, env) ?: error("Math evaluation resulted in null")
 
         return when (expr.op) {
             PLUS -> lhs + rhs
             MINUS -> lhs - rhs
             MULTIPLY -> lhs * rhs
             DIVIDE -> lhs / rhs
-            else -> throw IllegalArgumentException("Unknown operator: ${expr.op}")
+            else -> error("Unknown operator: ${expr.op}")
         }
     }
 
     private fun evaluateComp(expr: BinExpr, env: Env): Long {
-        val lhs = internalEvaluate(expr.lhs, env) ?: throw IllegalStateException("Comp evaluation resulted in null")
-        val rhs = internalEvaluate(expr.rhs, env) ?: throw IllegalStateException("Comp evaluation resulted in null")
+        val lhs = evaluate(expr.lhs, env) ?: error("Comp evaluation resulted in null")
+        val rhs = evaluate(expr.rhs, env) ?: error("Comp evaluation resulted in null")
 
         return when (expr.op) {
             EQUAL -> if (lhs == rhs) 1 else 0
@@ -32,19 +32,17 @@ class ExprEvaluator {
             GREATER_THAN -> if (lhs > rhs) 1 else 0
             LESS_THAN_OR_EQUAL -> if (lhs <= rhs) 1 else 0
             GREATER_THAN_OR_EQUAL -> if (lhs >= rhs) 1 else 0
-            else -> throw IllegalArgumentException("Unknown operator: ${expr.op}")
+            else -> error("Unknown operator: ${expr.op}")
         }
     }
 
     fun evaluateProgram(program: Program): Long? {
         val env = mutableMapOf<String, EnvValue>()
         program.functions.forEach { env[it.name] = Function(it) }
-        return internalEvaluate(program.bodies, env)
+        return evaluate(program.bodies, env)
     }
 
-    fun evaluate(expr: Expr) = internalEvaluate(expr, mutableMapOf())
-
-    fun internalEvaluate(expr: Expr, env: Env): Long? =
+    fun evaluate(expr: Expr, env: Env = mutableMapOf()): Long? =
         when (expr) {
             is MyInt -> expr.value
             is BinExpr -> {
@@ -55,37 +53,37 @@ class ExprEvaluator {
             }
             is Seq -> {
                 var result: Long? = null
-                expr.bodies.forEach { result = internalEvaluate(it, env) }
+                expr.bodies.forEach { result = evaluate(it, env) }
                 return result
             }
             is Assignment -> {
-                val value = internalEvaluate(expr.expression, env)
+                val value = evaluate(expr.expression, env)
                 env[expr.name] = Value(value)
                 return value
             }
             is Ident -> {
-                if (!env.containsKey(expr.name)) throw IllegalArgumentException()
-                return (env[expr.name] as Value).value ?: throw IllegalArgumentException("Unbound variable: ${expr.name}")
+                require(env.containsKey(expr.name)) { "Unbound variable: ${expr.name}" }
+                return (env[expr.name] as Value).value ?: error("Variable value is null: ${expr.name}")
             }
             is If -> {
-                internalEvaluate(
-                    if (internalEvaluate(expr.condition, env) != 0L) expr.thenBranch else expr.elseBranch,
+                evaluate(
+                    if (evaluate(expr.condition, env) != 0L) expr.thenBranch else expr.elseBranch,
                     env
                 )
             }
             is While -> {
-                while (internalEvaluate(expr.condition, env) != 0L) {
-                    internalEvaluate(expr.body, env)
+                while (evaluate(expr.condition, env) != 0L) {
+                    evaluate(expr.body, env)
                 }
                 return null
             }
             is Call -> {
                 val e = env[expr.func] ?: throw IllegalArgumentException("Unbound function: ${expr.func}")
-                if (e !is Function) throw IllegalArgumentException("Not a function: ${expr.func}")
+                require(e is Function) { "Not a function: ${expr.func}" }
                 val newEnv = env.toMutableMap()
-                expr.args.forEachIndexed { i, expr -> newEnv[e.func.paramNames[i]] = Value(internalEvaluate(expr, env)) }
-                return internalEvaluate(e.func.body, newEnv)
+                expr.args.forEachIndexed { i, expr -> newEnv[e.func.paramNames[i]] = Value(evaluate(expr, env)) }
+                return evaluate(e.func.body, newEnv)
             }
-            else -> throw IllegalArgumentException("Unknown expression type: $expr")
+            else -> error("Unknown expression type: $expr")
         }
 }
