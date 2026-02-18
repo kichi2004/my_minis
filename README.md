@@ -12,7 +12,8 @@
 - `ExprEvaluator.kt`: 式の評価を行うクラス
 - `JsonArrayEvaluator`: 配列ベース構文のパースを行うクラス
 - `JsonObjectEvaluator`: オブジェクトベース構文のパースを行うクラス
-**`src/test/kotlin/**`
+
+**`src/test/kotlin/**`**
 各種テストを配置
 
 ### 変更点
