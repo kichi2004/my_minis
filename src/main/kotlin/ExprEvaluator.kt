@@ -17,6 +17,7 @@ class ExprEvaluator {
             MINUS -> lhs - rhs
             MULTIPLY -> lhs * rhs
             DIVIDE -> lhs / rhs
+            XOR -> lhs xor rhs
             else -> error("Unknown operator: ${expr.op}")
         }
     }
@@ -32,6 +33,8 @@ class ExprEvaluator {
             GREATER_THAN -> if (lhs > rhs) 1 else 0
             LESS_THAN_OR_EQUAL -> if (lhs <= rhs) 1 else 0
             GREATER_THAN_OR_EQUAL -> if (lhs >= rhs) 1 else 0
+            AND -> if (lhs != 0L && rhs != 0L) 1 else 0
+            OR -> if (lhs != 0L || rhs != 0L) 1 else 0
             else -> error("Unknown operator: ${expr.op}")
         }
     }
@@ -47,10 +50,15 @@ class ExprEvaluator {
             is MyInt -> expr.value
             is BinExpr -> {
                 when (expr.op) {
-                    PLUS, MINUS, MULTIPLY, DIVIDE -> evaluateMath(expr, env)
-                    EQUAL, NOT_EQUAL, LESS_THAN, GREATER_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN_OR_EQUAL -> evaluateComp(expr, env)
+                    PLUS, MINUS, MULTIPLY, DIVIDE, XOR -> evaluateMath(expr, env)
+                    EQUAL, NOT_EQUAL, LESS_THAN, GREATER_THAN,
+                    LESS_THAN_OR_EQUAL, GREATER_THAN_OR_EQUAL, AND, OR -> evaluateComp(
+                        expr,
+                        env
+                    )
                 }
             }
+            is Not -> return if (requireNotNull(evaluate(expr.expr, env)) == 0L) 1 else 0
             is Seq -> {
                 var result: Long? = null
                 expr.bodies.forEach { result = evaluate(it, env) }

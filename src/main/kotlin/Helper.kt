@@ -59,3 +59,21 @@ fun tNe(a: Expr, b: Expr) = BinExpr(
     lhs = a,
     rhs = b
 )
+
+fun tAnd(a: Expr, b: Expr) = BinExpr(
+    op = BinExpr.Op.AND,
+    lhs = a,
+    rhs = b
+)
+
+fun tOr(a: Expr, b: Expr) = BinExpr(
+    op = BinExpr.Op.OR,
+    lhs = a,
+    rhs = b
+)
+
+fun tXor(a: Expr, b: Expr) = BinExpr(
+    op = BinExpr.Op.XOR,
+    lhs = a,
+    rhs = b
+)

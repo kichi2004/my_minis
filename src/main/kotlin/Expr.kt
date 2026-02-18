@@ -2,7 +2,7 @@ abstract class Expr : Ast {
     constructor(type: String) : super(type)
 }
 
-class BinExpr(val op: Op, val lhs: Expr, val rhs: Expr) : Expr("BinExpr") {
+class BinExpr(val op: Op, val lhs: Expr, val rhs: Expr) : Expr("BinExpr[${op.name}]") {
     enum class Op {
         PLUS,
         MINUS,
@@ -14,8 +14,13 @@ class BinExpr(val op: Op, val lhs: Expr, val rhs: Expr) : Expr("BinExpr") {
         GREATER_THAN_OR_EQUAL,
         EQUAL,
         NOT_EQUAL,
+        AND,
+        OR,
+        XOR,
     }
 }
+
+class Not(val expr: Expr) : Expr("Not")
 
 class MyInt(val value: Long) : Expr("Int")
 

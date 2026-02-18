@@ -60,6 +60,7 @@ sealed class JsonObjectEvaluator {
                 }
 
                 return when (op) {
+                    "not" -> Not(translateToExpr(json["operand"]!!))
                     "seq" -> {
                         val expressions = json["expressions"]?.jsonArray
                         requireNotNull(expressions)

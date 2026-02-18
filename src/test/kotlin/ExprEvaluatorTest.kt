@@ -87,6 +87,42 @@ class ExprEvaluatorTest : FunSpec({
             val e = tNe(tInt(1), tInt(0))
             evaluator.evaluate(e) shouldBe 1
         }
+    }
+    context("論理演算") {
+        test ("1 AND 1 == 1") {
+            val e = tAnd(tInt(1), tInt(1))
+            evaluator.evaluate(e) shouldBe 1
+        }
+        test ("1 AND 0 == 0") {
+            val e = tAnd(tInt(1), tInt(0))
+            evaluator.evaluate(e) shouldBe 0
+        }
+        test ("1 OR 0 == 1") {
+            val e = tOr(tInt(1), tInt(0))
+            evaluator.evaluate(e) shouldBe 1
+        }
+        test ("0 OR 0 == 0") {
+            val e = tOr(tInt(0), tInt(0))
+            evaluator.evaluate(e) shouldBe 0
+        }
+        test ("5 XOR 3 == 6") {
+            val e = tXor(tInt(5), tInt(3))
+            evaluator.evaluate(e) shouldBe 6
+        }
+        test ("12 XOR 10 == 6") {
+            val e = tXor(tInt(12), tInt(10))
+            evaluator.evaluate(e) shouldBe 6
+        }
+        test ("NOT 1 == 0") {
+            val e = Not(tInt(1))
+            evaluator.evaluate(e) shouldBe 0
+        }
+        test ("NOT 0 == 1") {
+            val e = Not(tInt(0))
+            evaluator.evaluate(e) shouldBe 1
+        }
+    }
+    context("代入と識別子") {
         test("{ a = 100; a} == 100") {
             val e = Seq(
                 Assignment("a", tInt(100)),
@@ -108,6 +144,18 @@ class ExprEvaluatorTest : FunSpec({
             val e = If(tGt(tInt(1), tInt(2)), tInt(2), tInt(1))
             evaluator.evaluate(e) shouldBe 1
         }
+        test("if (NOT 0) 5 else 3 == 5") {
+            val e = If(Not(tInt(0)), tInt(5), tInt(3))
+            evaluator.evaluate(e) shouldBe 5
+        }
+        test("if (1 AND 1) 10 else 20 == 10") {
+            val e = If(tAnd(tInt(1), tInt(1)), tInt(10), tInt(20))
+            evaluator.evaluate(e) shouldBe 10
+        }
+        test("if (0 OR 1) 7 else 8 == 7") {
+            val e = If(tOr(tInt(0), tInt(1)), tInt(7), tInt(8))
+            evaluator.evaluate(e) shouldBe 7
+        }
     }
     context("While ループ") {
         test("i = 0; while (i < 10) { i = i + 1; } == 10") {
@@ -117,6 +165,22 @@ class ExprEvaluatorTest : FunSpec({
                 Ident("i")
             )
             evaluator.evaluate(e) shouldBe 10
+        }
+        test("i = 0; while (i < 5 AND i >= 0) { i = i + 1; } == 5") {
+            val e = Seq(
+                Assignment("i", tInt(0)),
+                While(tAnd(tLt(Ident("i"), tInt(5)), tGe(Ident("i"), tInt(0))), Seq(Assignment("i", tAdd(Ident("i"), tInt(1))))),
+                Ident("i")
+            )
+            evaluator.evaluate(e) shouldBe 5
+        }
+        test("i = 10; while (NOT (i == 0)) { i = i - 1; } == 0") {
+            val e = Seq(
+                Assignment("i", tInt(10)),
+                While(Not(tEq(Ident("i"), tInt(0))), Seq(Assignment("i", tSub(Ident("i"), tInt(1))))),
+                Ident("i")
+            )
+            evaluator.evaluate(e) shouldBe 0
         }
     }
     context("関数呼び出し") {

@@ -47,6 +47,7 @@ sealed class JsonArrayEvaluator {
                     return buildBinExpr(op, translateToExpr(json[1]), translateToExpr(json[2]))
                 }
                 return when (op) {
+                    "not" -> Not(translateToExpr(json[1]))
                     "seq" -> Seq(*json.drop(1).map(::translateToExpr).toTypedArray())
                     "if" -> {
                         require(json.size == 4) { "Expected array of size 4 for 'if' statement, got: ${json.size}" }
